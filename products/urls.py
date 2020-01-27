@@ -8,5 +8,4 @@ app_name = 'products'
 urlpatterns = [
     path('', views.ProductList.as_view()),
     path('<int:pk>/', views.ProductDetail.as_view()),
-    path('api/doc', get_swagger_view(title='Rest API Document')),
 ]

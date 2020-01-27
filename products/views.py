@@ -5,8 +5,8 @@ from django.core.paginator import Paginator
 from rest_framework.response import Response
 from rest_framework import views
 
-def product_score(id):
-    score = []
+def get_product_scores(id):
+    scores = []
     oily_score = 0
     dry_score = 0
     sensitive_score = 0
@@ -32,21 +32,21 @@ def product_score(id):
         elif benefit.sensitive == "X":
             sensitive_score -= 1
 
-    score.append(oily_score)
-    score.append(dry_score)
-    score.append(sensitive_score)
-    return score
+    scores.append(oily_score)
+    scores.append(dry_score)
+    scores.append(sensitive_score)
+    return scores
 
-def insert_score():
+def insert_product_scores():
     OILY = 0
     DRY = 1
     SENSITIVE = 2
 
     for product in Product.objects.all():
-        score = product_score(product.id)
-        product.oily = score[OILY]
-        product.dry = score[DRY]
-        product.sensitive = score[SENSITIVE]
+        scores = get_product_scores(product.id)
+        product.oily = scores[OILY]
+        product.dry = scores[DRY]
+        product.sensitive = scores[SENSITIVE]
         product.save()
 
     print("complete")
@@ -56,6 +56,7 @@ class ProductList(views.APIView):
     상품 목록 조회
     """
     def get(self, request, format=None):
+        MAX_COUNT = 50
         skin_type = self.request.query_params.get('skin_type')
         category = self.request.query_params.get('category')
         page = self.request.query_params.get('page')
@@ -88,11 +89,9 @@ class ProductList(views.APIView):
             for ex_ingrdnt in ex_ingrdnts:
                 queryset = queryset.exclude(ingredients__icontains=ex_ingrdnt)
 
-        if page != None:
-            page_number = self.request.query_params.get('page_number ', page)
-        else:
-            page_number = self.request.query_params.get('page_number ', 1)
-        page_size = self.request.query_params.get('page_size ', 50)
+        if page == None: page = 1
+        page_number = self.request.query_params.get('page_number ', page)
+        page_size = self.request.query_params.get('page_size ', MAX_COUNT)
 
         paginator = Paginator(queryset, page_size)
         serializer = ProductListSerializer(paginator.page(page_number), many=True)
@@ -109,6 +108,7 @@ class ProductDetail(views.APIView):
             raise Http404
 
     def get(self, request, pk, format=None):
+        RECOMND_COUNT = 3
         detail_queryset = self.get_object(pk)
         detail_serializer = ProductDetailSerializer(detail_queryset)
 
@@ -120,7 +120,7 @@ class ProductDetail(views.APIView):
         product_detail = []
         product_detail.append(detail_serializer.data)
 
-        for i in range(3):
+        for i in range(RECOMND_COUNT):
             product_detail.append(recomnd_serializer.data[i])
 
         return Response(product_detail)
