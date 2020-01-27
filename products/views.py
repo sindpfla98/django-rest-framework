@@ -114,7 +114,7 @@ class ProductDetail(views.APIView):
 
         skin_type = self.request.query_params.get('skin_type')
         skin_type_desc = "-" + skin_type
-        recomnd_queryset = Product.objects.order_by(skin_type_desc, 'price')[:3]
+        recomnd_queryset = Product.objects.order_by(skin_type_desc, 'price')[:RECOMND_COUNT]
         recomnd_serializer = ProductRecomndSerializer(recomnd_queryset, many=True)
 
         product_detail = []
